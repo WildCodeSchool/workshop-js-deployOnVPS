@@ -29,22 +29,28 @@
 
 ### Install dependencies
 
-### Install a process manager 
-
-### Install a web server
-
-### Install a database
+### Install a process manager
+[warning] => à bien distinguer des dépendencies ? Pourquoi un process manager ? à quoi ça sert ?
 
 
-## Web server & reverse proxy configuration
+## Install and configure a database
 
-### Default configuration
+### Default installation and configuration
+
+### Authentication configuration
+
+### Create a user and manage permissions
+
+
+## Install and configure a web server & reverse-proxy
+
+### Default installation and configuration
 
 ### Creating a configuration file
 
 ### Set up your SSL certificates to manage https access
 
-### Setting up a cron job for our ssl certificates
+### Setting up a cron job for our ssl certificates
 
 
 ## Configuration & deployment of a fullstack js app

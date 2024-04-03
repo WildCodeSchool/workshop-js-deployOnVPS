@@ -1,0 +1,17 @@
+remote_theme: WildCodeSchool/workshops-jekyll-theme
+
+titles_from_headings:
+  enabled: false
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
+
+style: dev
+title: Deploy 03 - VPS
+description: "How to deploy a fullstack js app on a VPS with Nginx"
+show_clone: false
+show_toc: true
+lang: en

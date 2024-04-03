@@ -44,7 +44,7 @@
 
 ### Set up your SSL certificates to manage https access
 
-### Setting up a cron job for our ssl certificates
+### Setting up a cron job for our ssl certificates
 
 
 ## Configuration & deployment of a fullstack js app

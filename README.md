@@ -7,11 +7,22 @@
 
 ### Deployment overview
 
+![deployement](./deployment.png)
+
 ### Virtual private server - VPS
+
+![vps comparison](./vps.png)
+![vps overview](./vpshosting.png)
 
 ### Domain name System - DNS
 
+![dns](./dns.png)
+
 ### Web server & reverse proxy
+
+![webhosting](./webhosting.png)
+![reverseproxy](./reverseproxy.png)
+![nginx](./nginx.png)
 
 
 ## Preparation

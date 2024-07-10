@@ -36,6 +36,28 @@ A traditional forward proxy server allows multiple clients to route traffic to a
 
 A reverse proxy effectively serves as a gateway between clients, users, and application servers. It handles all the access policy management and traffic routing, and it protects the identity of the server that actually processes the request.
 
+### Nginx explained
+
+What is Nginx?
+
+According to its documentation, Nginx (pronounced “engine X”) is an HTTP and reverse proxy server, a mail proxy server, and a generic TCP/UDP proxy server, originally written by Igor Sysoev.
+
+Nginx is used for a variety of tasks that contribute to improving Node performance:
+
+- Reverse proxy server: As traffic to your app increases, the best approach to improve performance is to use Nginx as a reverse proxy server in front of the Node.js server to load balance traffic across the servers. This is the core use case of Nginx in Node.js applications
+
+- Stateless load balancing: This improves performance while reducing load on backend services by sending off client requests to be fulfilled by any server with access to the requested file
+    
+- Cache static contents: Serving static content in a Node.js application and using Nginx as a reverse proxy server doubles the application performance to a maximum of 1,600 requests per second
+
+- Implement SSL/TLS and HTTP/2: Given the recent shift from using SSL/TLS to secure user interactions in Node.js applications, Nginx also supports HTTP/2 connections
+    
+- Performance tracking: You can keep real-time tabs on the overall performance of your Node.js application using the stats provided on Nginx’s live dashboards
+    
+- Scalability: Depending on what assets you’re serving, you can take advantage of the full‑featured HTTP, TCP, and UDP load balancing in Nginx to scale up your Node.js application
+
+Nginx currently supports seven scripting languages: Go, Node.js, Perl, PHP, Python, Ruby, and Java Servlet Containers (the last is an experimental module). It enables you to run applications written in different languages on the same server.
+
 ## Preparation
 
 ### Choosing a vps

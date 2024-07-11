@@ -178,10 +178,111 @@ PM2 is a daemon process manager that will help you manage and keep your applicat
 
 ### Default installation and configuration
 
+You can install MySQL using the APT package repository. 
+
+To install it, update the package index on your server if you haven't done so recently : 
+
+```bash
+sudo apt update
+```
+
+Next, install the `mysql-server` package :
+
+```bash
+sudo apt install mysql-server
+```
+
+This will install MySQL, but will not ask you to set a password or make other configuration changes. As this makes your MySQL installation insecure, we will address this point in the next step.
+
+
 ### Authentication configuration
+
+For new installations of MySQL you will need to run the security script included in the DBMS. This script changes some of the less secure default options for things like remote root logins and sample users.
+
+Run the security script with `sudo` :
+
+```bash
+sudo mysql_secure_installation
+```
+
+You will then be guided through a series of prompts where you can make some changes to the security options of your MySQL installation.
+
+Remember to launch the MySQL service, then check its status :
+```bash
+sudo service mysql start 
+```
+
+![capture_20220312182123974.bmp](./assets/mysqlStart.bmp)
+
+In Ubuntu systems running MySQL 5.7 (and later), the MySQL user **root** is configured to authenticate using the `auth_socket` plugin by default rather than with a password. This helps improve security and usability in many cases, but it can also complicate things if you need to allow an external program (e.g. phpMyAdmin) to access the user.
+
+In order to use a password to connect to MySQL as **root**, you will need to change its authentication method from `auth_socket` to another plugin, such as `caching_sha2_password` or `mysql_native_password`. To do this, open the MySQL prompt from your terminal:
+
+```bash
+sudo mysql
+```
+
+To configure the **root** account so that it authenticates with a password, from the MySQL prompt issue an `ALTER USER` statement to modify the authentication plugin used and set a new password.
+
+Be sure to replace `password` with a strong password of your choice, and remember that this command will change the **root** password you set in step before:
+
+```sql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'password';
+```
+
+<aside>
+💡 The previous `ALTER USER` statement sets the MySQL user **root** to authenticate with the `caching_sha2_password` plugin. [According to the official MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password), `caching_sha2_password` is MySQL's preferred authentication plugin, as it provides more secure password encryption than the old, but still widely used, `mysql_native_password`
+
+</aside>
+
+<aside>
+⚠️ However, many applications do not work reliably with `caching_sha2_password`. If you plan to use this database with a PHP application or connect via an orm like sequelize, you can set **root** to authenticate with `mysql_native_password` instead:
+
+```sql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+```
+
+</aside>
+
+Then run `FLUSH PRIVILEGES` which puts your new changes into effect:
+
+```sql
+FLUSH PRIVILEGES;
+```
 
 ### Create a user and manage permissions
 
+Upon installation, MySQL creates a root user account which you can use to manage your database. This user has full privileges over the MySQL server, meaning it has complete control over every database, table, user, and so on. Because of this, it’s best to avoid using this account outside of administrative functions. This step outlines how to use the root MySQL user to create a new user account and grant it privileges.
+
+Once you have access to the MySQL prompt, you can create a new user with a CREATE USER statement. These follow this general syntax:
+
+```sql
+CREATE USER 'username'@'host' IDENTIFIED WITH mysql_native_password BY 'yourpassword';
+```
+
+After CREATE USER, you specify a username. This is immediately followed by an @ sign and then the hostname from which this user will connect. If you only plan to access this user locally from your Ubuntu server, you can specify localhost. Wrapping both the username and host in single quotes isn’t always necessary, but doing so can help to prevent errors.
+
+The general syntax for granting user privileges is as follows:
+
+```sql
+GRANT PRIVILEGE ON database.table TO 'username'@'host';
+```
+
+The PRIVILEGE value in this example syntax defines what actions the user is allowed to perform on the specified database and table. You can grant multiple privileges to the same user in one command by separating each with a comma. You can also grant a user privileges globally by entering asterisks (*) in place of the database and table names. In SQL, asterisks are special characters used to represent “all” databases or tables.
+
+Run this GRANT statement, replacing `username` with your own MySQL user’s name, to grant these privileges to your user:
+
+```sql
+GRANT CREATE, ALTER, DROP, INSERT, UPDATE, DELETE, SELECT, REFERENCES, RELOAD on *.* TO 'username'@'localhost' WITH GRANT OPTION;
+```
+
+Note that this statement also includes WITH GRANT OPTION. This will allow your MySQL user to grant any permissions that it has to other users on the system.
+
+Then run `FLUSH PRIVILEGES` which puts your new changes into effect:
+
+```sql
+FLUSH PRIVILEGES;
+```
 
 ## Install and configure a web server & reverse-proxy
 

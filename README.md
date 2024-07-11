@@ -96,10 +96,6 @@ You can follow the steps below to set up the link between your domain name and y
   - add your VPS ip to the `cible` input and confirm :
   ![dns3](dns3.png)
 
-Then repeat the same operation, this time specifying in the `subdomain` field the string `api`
-
-This will allow us to host both our react application and our API on the same server, distinguishing them with a distinct domain ans subdomain name.
-
 ## Configure your VPS
 
 Connecting a computer to a Virtual Private Server (VPS) is an essential skill for anyone working with web hosting, development, or server administration.
@@ -227,22 +223,19 @@ To configure the **root** account so that it authenticates with a password, fro
 Be sure to replace `password` with a strong password of your choice, and remember that this command will change the **root** password you set in step before:
 
 ```sql
-ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'password';
-```
-
-<aside>
-💡 The previous `ALTER USER` statement sets the MySQL user **root** to authenticate with the `caching_sha2_password` plugin. [According to the official MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password), `caching_sha2_password` is MySQL's preferred authentication plugin, as it provides more secure password encryption than the old, but still widely used, `mysql_native_password`
-
-</aside>
-
-<aside>
-⚠️ However, many applications do not work reliably with `caching_sha2_password`. If you plan to use this database with a PHP application or connect via an orm like sequelize, you can set **root** to authenticate with `mysql_native_password` instead:
-
-```sql
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 ```
 
-</aside>
+
+💡 The previous `ALTER USER` statement sets the MySQL user **root** to authenticate with the `caching_sha2_password` plugin. [According to the official MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password), `caching_sha2_password` is MySQL's preferred authentication plugin, as it provides more secure password encryption than the old, but still widely used, `mysql_native_password`
+{:.alert-info}
+
+
+⚠️ However, many applications do not work reliably with `caching_sha2_password`. If you plan to use this database with a PHP application or connect via an orm like sequelize, you can set **root** to authenticate with `mysql_native_password` instead:
+```sql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+```
+{:.alert-info}
 
 Then run `FLUSH PRIVILEGES` which puts your new changes into effect:
 
@@ -288,12 +281,378 @@ FLUSH PRIVILEGES;
 
 ### Default installation and configuration
 
+Nginx is a popular package included in nearly all Linux distribution repositories, including Ubuntu 24.04, though the version provided is often older but still great for production use cases.
+
+So, to install Nginx on Ubuntu using the package manager, open your terminal and execute the following command:
+
+```bash
+sudo apt install nginx
+```
+
+You can then verify that nginx is working correctly with the following command
+
+```bash
+sudo service nginx status
+```
+
+![nginx status](./assets/nginxStatus.bmp)
+
+If the nginx service is not started, use the following command: 
+
+```bash
+sudo service nginx start
+```
+
+Then enter your server's IP or domain name into your browser's address bar:
+
+```http://your_server_ip```
+
+You should get the default Nginx home page:
+
+![nginx home page](https://assets.digitalocean.com/articles/nginx_1604/default_page.png)
+
+If you arrived at this page, it means that your server is working correctly and you can now manage it!
+
+PS - The default Nginx configuration is located in `etc/nginx/sites-enabled/`. There she is :
+
+```yaml
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# http://wiki.nginx.org/Pitfalls
+# http://wiki.nginx.org/QuickStart
+# http://wiki.nginx.org/Configuration
+#
+# Generally, you will want to move this file somewhere, and start with a clean
+# file but keep this around for reference. Or just disable in sites-enabled.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        # SSL configuration
+        #
+        # listen 443 ssl default_server;
+        # listen [::]:443 ssl default_server;
+        #
+        # Note: You should disable gzip for SSL traffic.
+        # See: https://bugs.debian.org/773332
+        #
+        # Read up on ssl_ciphers to ensure a secure configuration.
+        # See: https://bugs.debian.org/765782
+        #
+        # Self signed certs generated by the ssl-cert package
+        # Don't use them in a production server!
+        #
+        # include snippets/snakeoil.conf;
+
+        root /var/www/html;
+
+        # Add index.php to the list if you are using PHP
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name _;
+
+        location / {
+                # First attempt to serve request as file, then
+                # as directory, then fall back to displaying a 404.
+                try_files $uri $uri/ =404;
+        }
+
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        #location ~ \.php$ {
+        #       include snippets/fastcgi-php.conf;
+        #
+        #       # With php7.0-cgi alone:
+        #       fastcgi_pass 127.0.0.1:9000;
+        #       # With php7.0-fpm:
+        #       fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+        #}
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        #location ~ /\.ht {
+        #       deny all;
+        #}
+}
+
+# Virtual Host configuration for example.com
+#
+# You can move that to a different file under sites-available/ and symlink that
+# to sites-enabled/ to enable it.
+#
+#server {
+#       listen 80;
+#       listen [::]:80;
+#
+#       server_name example.com;
+#
+#       root /var/www/example.com;
+#       index index.html;
+#
+#       location / {
+#               try_files $uri $uri/ =404;
+#       }
+#}
+```
+
+The `server` directive allows you to group together the different actions to be carried out for a group. In jargon, a group is a "virtual server". [Learn more](https://nginx.org/en/docs/http/ngx_http_core_module.html#server)
+{:.alert-info}
+
+ℹ️ The line `listen 80 default_server;` indicates that port 80 is used. Thus, all traffic to the URL "ipaddress:80" will be processed by this set (by default browsers query port 80 in http and port 443 in https). [Learn more](https://nginx.org/en/docs/http/ngx_http_core_module.html#listen)
+{:.alert-info}
+
+ℹ️ The `root` directive which indicates the path to the base folder of the files to be returned (useful in the case of static file rendering). By default nginx is configured to search in the `var/www/html;` folder.
+As for the home page, it is designated by the directive `index`: `index index.html index.htm index.nginx-debian.html;`. Look in the `/var/www/html` folder: you will indeed find the `index.nginx-debian.html` file there.
+{:.alert-info}
+
+ℹ️ The `server_name` directive allows you to indicate the **domain name**, or the **IP address**, targeted by the group (virtual server). [Learn more in the documentation](https://nginx.org/en/docs/http/server_names.html).
+{:.alert-info}
+
+ℹ️ The next directive is `location`. It refers to the **relative path** which is in the URL (the URI) and takes a regular expression or a character string as an argument. Small subtlety: if the argument is a string, the URI must **start** with it. ! In this example, only a forward slash is specified: `/`. This means that all requests with a URI starting with `/` will have to apply the block's directives. [Learn more](https://nginx.org/en/docs/http/ngx_http_core_module.html#location)
+{:.alert-info}
+
+ℹ️ The `try_files` directive (useful in case of static file rendering) within the `location` block when it checks the existence of files passed as an argument in order of priority. 
+The example also indicates: `try_files $uri $uri/ =404;` . What's going to happen ? 
+Nginx will fetch the file from the server following the path passed in the URL. For example, it will navigate to `root_file/static/metallica.png` if the URI is `/static/metallica.png`. If it is not found, it will try to find the folder. 
+For example: `/static/metallica.png/`. If the file is still absent, it will return a 404 error.
+{:.alert-info}
+
 ### Creating a configuration file
+
+By convention, configuration files are grouped in the `sites-enabled` folder. They are all taken into account in the same way. This folder does not strictly speaking contain any real files, the default file that we saw previously was in fact a symbolic link, the real file is located in `etc/nginx/sites-available/`
+
+💡 A symbolic link refers to a file saved elsewhere in the system. So if you ask to open `nginx/sites-enabled/defaut`, the system will open `nginx/sites-available/default`.
+{:.alert-info}
+
+To start you can therefore delete the default file in `sites-enabled`, then go to `sites-available` and create a new configuration file, generally we name the configuration file with the domain name or subdomain towards which the virtual server that will have been defined there points: `mydomain.com`, this includes the fact that we will only declare a single `server` block directive 
+
+```bash
+sudo touch mydomain.com
+```
+
+Then create a symbolic link from this file to the `sites-enabled` folder:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/mydomain.com /etc/nginx/sites-enabled/mydomain.com
+```
+
+#### Option 1 (API/express) - Reverse proxy configuration to redirect to a local server
+
+A [**Nginx HTTPS reverse proxy**](https://nginx.org/) is an intermediary proxy service that takes a client request, forwards it to one or more servers, and then sends the server's response back to the client. While most common applications can run as a web server on their own, the Nginx web server is capable of providing a number of advanced features such as load balancing, TLS/SSL capabilities, and acceleration. which most specialized applications lack. By using an Nginx reverse proxy, all applications can benefit from these features.
+
+To pass a request to an HTTP proxy server, the [proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass) directive is specified inside a [location] directive block (https://nginx.org/en/docs/http/ngx_http_core_module.html#location). For example: 
+
+```yaml
+location / {
+    proxy_pass http://localhost:3000
+}
+```
+
+ℹ️ This example configuration causes all requests processed at this location to be forwarded to the proxy server at the specified address. This address can be specified as a domain name or an IP address. The address can also include a port
+{:.alert-info}
+
+So let's get down to business, edit your `mydomain.com` file previously created in the `sites-available` folder and add the following code: 
+
+```yaml
+server 
+{
+       server_name mydomain.com;
+
+       location /api 
+       {
+								proxy_set_header Host $host;
+							  proxy_set_header X-Real-IP $remote_addr;
+                proxy_pass http://localhost:3310;
+
+        }
+
+}
+```
+
+ℹ️ `proxy_set_header` rewrites the headers of the HTTP request. This allows you to transmit to your application all the information of the user making the request (host, ip, etc.)
+For more information on headers with nginx:
+https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/#passing-request-headers
+{:.alert-info}
+
+And that's it, now nginx will redirect all http requests made on the specified domain name to your local application! We will see below the implementation of ssl certificate via certbot to configure https access but reassure you, we will no longer have to touch this configuration file.
+
+#### Option 2 (React) - Configuration for static file rendering
+
+You can use nginx to allow your web server to render static files, this is particularly useful for applications from scratch in php but also to allow public access to resources such as images or to make a site static in html
+
+To serve static files we use the [root](https://nginx.org/en/docs/http/ngx_http_core_module.html#root) directive specifying the path to the source folder inside a directive block [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location), we also add the directive [index](https://nginx.org/en/docs/http /ngx_http_index_module.html#index) to specify the file to load by default, multiple files can be specified in this directive. For example : 
+
+```yaml
+location / 
+{
+    root /var/www/html/mydomain.com;
+		index index.html app.html;
+}
+```
+
+Let's now see the configuration to allow a react build application to be put online for production, edit your `mydomain.com` and add the new location bloc as following:
+
+```yaml
+server 
+{
+      server_name mydomain.com;
+
+      location /api 
+      {
+							proxy_set_header Host $host;
+						  proxy_set_header X-Real-IP $remote_addr;
+              proxy_pass http://localhost:3310;
+
+      }
+
+      location / 
+      {
+              root /var/www/html/reactapp/build;
+              index index.html index.htm;
+              try_files $uri $uri/ /index.html;
+      }
+
+}
+```
+
+Nothing new here is the addition of the [try_files](https://nginx.org/en/docs/http/ngx_http_core_module.html#try_files) directive which can be used to check if the file or the specified directory exists and otherwise perform a redirection to a url, a file or even just returned an http code status.
+
+In the code above we used this directive because in the case of a react application if the user were to access our application with an endpoint different from the entry point defined by our location directive, nginx would return an error 404.. 
+
+To manage this we redirect to the index.html file then react router does its work to dynamically load the corresponding page!
+
+In the case where you have also implemented a file upload on your application via multer, you will also need to add to our configuration file access to the upload folder via the following location block : 
+
+```yaml
+server 
+{
+      server_name mydomain.com;
+
+      location /api 
+      {
+							proxy_set_header Host $host;
+						  proxy_set_header X-Real-IP $remote_addr;
+              proxy_pass http://localhost:3310;
+      }
+
+      location / 
+      {
+              root /var/www/html/reactapp/build;
+              index index.html index.htm;
+              try_files $uri $uri/ /index.html;
+      }
+
+      location /upload 
+      {
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_pass "http://localhost:3320/upload/";
+
+              # preflight requests
+              if ( $request_method = OPTIONS ) 
+              {
+                  add_header "Access-Control-Allow-Origin" *;
+                  add_header "Access-Control-Allow-Credentials" true;
+                  add_header "Access-Control-Allow-Methods" "GET, POST, PUT, HEAD, DELETE, OPTIONS";
+                  add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Requested-With, Content-Type, Accept";
+                  return 200;
+              }
+      }
+
+
+}
+```
+
 
 ### Set up your SSL certificates to manage https access
 
+To generate your ssl certificate and automatically set up the nginx configuration necessary for https access and http to https redirection, for this you must first install snapd a software manager for linux then install certbot via the snap command: 
+
+```bash
+sudo apt install snapd
+sudo snap install --classic certbot
+```
+
+From there, all we have to do is run the certbot command to generate a new ssl certificate for a domain name and update the nginx configuration: 
+
+```bash
+sudo certbot --nginx -d mydomain.com
+```
+
 ### Setting up a cron job for our ssl certificates
 
+[Cron](https://en.wikipedia.org/wiki/Cron) is a time-based task scheduling daemon found in Unix-like operating systems, including distributions Linux. Cron runs in the background and tasks scheduled with cron, called “cron jobs,” are executed automatically, making cron useful for automating maintenance-related tasks.
+
+Almost all Linux distributions include some form of cron installed by default. However, if you are using an Ubuntu machine that does not have cron installed, you can install it using APT: 
+
+```bash
+sudo apt install cron
+sudo systemctl enable cron
+```
+
+#### Foreword - understanding cron jobs:
+
+Cron jobs are saved and managed in a special file called `crontab`. Each user profile in the system can have its own crontab where it can schedule jobs.
+
+To schedule a job, simply open your crontab for editing and add a task written as a *cron expression*. The syntax for cron expressions can be broken down into two elements: the schedule and the command to execute.
+
+Together, the tasks scheduled in a crontab are structured like this:
+
+```bash
+minute hour day_of_month month day_of_week command_to_run
+```
+
+Here is a working example of a cron expression. This expression runs the command `curl http://www.google.com` every Tuesday at 5:30 p.m.:
+
+```
+30 17 * * 2 curl http://www.google.com
+```
+
+As mentioned previously, a crontab is a special file that contains the schedule of jobs that the cron will run. However, they are not intended to be edited directly. Instead, it is recommended to use the `crontab` command. This allows you to change the crontab of your user profile without changing your privileges with `sudo`. The `crontab` command will also let you know if you have any syntax errors in the crontab, while editing it directly will not.
+
+You can modify your crontab with the following command:
+
+```bash
+crontab -e
+```
+
+⚠️ If you want to execute a sudo command in the form of a cronjob you must edit the crontab of the super user and not the current user, example:
+```bash
+sudo crontab -e
+```
+then set your cron job without specifying the sudo keyword in front of the command
+{:.alert-info}
+
+If this is the first time you have run the `crontab` command under this user profile, it will prompt you to select a default text editor to use to edit your crontab: Enter the number corresponding to the text editor your choice. You can also press the `ENTER` key to accept the default choice.
+
+After making your selection, you will be taken to a new crontab containing some commented instructions on how to use it, you can enter your schedule with each job on a new line: 
+
+![crontab](./assets/cronJob.bmp)
+
+In the cronjob example above we run the certbot renew —dry-run command on the first day of January each year.
+
+In conclusion, start by editing the sudo cron job: 
+
+```bash
+sudo crontab -e
+```
+
+Then at the end of the file add the following line before returning to the new line: 
+
+```bash
+0 0 1 1 * certbot renew --dry-run
+```
+
+And there you have it, your certificates will be automatically updated every year, you can modify the cron job so that it runs every 3 months for example (see table of values ​​above).
 
 ## Configuration & deployment of a fullstack js app
 

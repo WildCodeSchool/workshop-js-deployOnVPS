@@ -545,7 +545,7 @@ server
 
       location / 
       {
-              root /var/www/html/reactapp/build;
+              root /var/www/html/monprojet/client/dist;
               index index.html index.htm;
               try_files $uri $uri/ /index.html;
       }
@@ -555,7 +555,7 @@ server
               proxy_http_version 1.1;
               proxy_set_header Upgrade $http_upgrade;
               proxy_set_header Connection 'upgrade';
-              proxy_pass "http://localhost:3320/upload/";
+              proxy_pass "http://localhost:3310/upload/";
 
               # preflight requests
               if ( $request_method = OPTIONS ) 
@@ -656,11 +656,96 @@ And there you have it, your certificates will be automatically updated every yea
 
 ## Configuration & deployment of a fullstack js app
 
-### Adding minimal security headers
+### Transfer the application to your vps
+
+There are several options for transferring our application to a vps, with the terminal via the scp protocol or via an ftp connection with a graphical tool like filezilla but the simplest option is still to use git to simply clone our repository directly on our vps directly in the `/var/www/html` (if the folder doesn't exist just create it) :
+
+```bash
+git clone git@github.com:yourusername/yourrepository.git
+```
 
 ### Set environment variables in production and install dependencies
 
-### Transfer the application to your vps
+First we will need to define our .env in the `client` and `server` folders by defining at least the database connection information as well as the client and api url so that it now points to our name domain (https) rather than localhost
 
-### Launch your application with pm2
+`/client/.env` : 
+```bash
+# Server API URL (call it in React with import.meta.env.VITE_API_URL)
+VITE_API_URL=https://mondomain.com/api
+
+# Other Environment Variables (if needed)
+# VITE_OTHER_VARIABLE=value
+```
+
+`/server/.env` : 
+```bash
+# Application Configuration
+APP_PORT=3310
+APP_HOST=https://mondomain.com # this part is important if you have file upload
+APP_SECRET=defineasupersecretkeyhere
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=mysqlUser
+DB_PASSWORD=MysqlUserPassword
+DB_NAME=databasename
+# Client URL (for CORS configuration)
+CLIENT_URL=https://mondomain.com
+```
+
+If you have implemented a file upload via multer you will need to modify the generation of your image URLs using the APP_HOST environment variable defined previously, example : 
+
+```js
+const uploadDest = `${process.env.APP_HOST}/upload/`;
+if (req.files.picture_jewell)
+  req.body.picture_jewell = uploadDest + req.files.picture_jewell[0].filename;
+
+```
+
+Important thing also if you ever use cookies for example to set up a refreshToken system you must add the secure option to true when generating your cookie :
+
+```js
+res
+.status(200)
+.cookie("refreshToken", refreshToken, {
+  HttpOnly: true,
+  sameSite: "lax",
+  expires: new Date(Date.now() + 900000000),
+	secure: true // this is required for https
+})
+
+```
+
+When you done you can now install the dependencies and execute your database migration script from the root folder of your project : 
+
+```bash
+npm install
+```
+
+```bash
+npm run db:migrate
+```
+
+### Build your react app
+
+A react application must be built to generate compressed file, we have access to a build command via npm which allows us to generate a dist folder which contains the build of our react application, run the following command from your `client` folder :
+
+```bash
+npm run build
+```
+
+### Launch your api with pm2
+
+Now we need to start a local server for our api with pm2 which will be link using a reverse proxy as defined in our nginx configuration, run the following command from your `server` folder : 
+
+```bash
+pm2 start index.js --name=myappname
+```
+# Congratulation
+
+Now try to access to your domain to see if all works properly, if not call your instructor !
+
+![congrats](https://img.icons8.com/?size=100&id=KILRNcSIA4Fn&format=png&color=000000) congratulation you have deployed you first fullstack application ! 
+
 

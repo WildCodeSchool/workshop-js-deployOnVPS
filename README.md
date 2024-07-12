@@ -742,7 +742,7 @@ Now we need to start a local server for our api with pm2 which will be link usin
 ```bash
 pm2 start index.js --name=myappname
 ```
-# Congratulation
+# Congratulation
 
 Now try to access to your domain to see if all works properly, if not call your instructor !
 
